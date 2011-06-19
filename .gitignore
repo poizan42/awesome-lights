@@ -1,0 +1,15 @@
+*.s
+*.o
+*.map
+*.sym
+*.hex
+*.lss
+*.lst
+*.d
+*.eep
+*.elf
+*.pdf
+FFTatmega168
+*.bak
+.*.swp
+*.out
