@@ -2,8 +2,10 @@
 #include <p12f508.inc>
 	__CONFIG _MCLRE_OFF & _CP_OFF & _WDT_OFF & _IntRC_OSC
 
-IDX EQU 0x00
-BITLEN EQU D'96'
+ifndef IDX
+#define IDX 0x00
+endif
+BITLEN EQU D'100'
 
 TEST macro reg
 	MOVF	reg,F
@@ -175,9 +177,9 @@ main
 ;		goto rx_end
 ;	TMR0 = TMR0-BITLEN+adjustment
 ;	if !rx_bitnum,3 (rx_bitnum < 8 - data bit)
-;		rx_data <<= 1
+;		rx_data >>= 1
 ;		if d_rx
-;			rx_data,0 = 1
+;			rx_data,7 = 1
 ;		rx_bitnum++
 ;	else (rx_bitnum=8 - stopbit expected)
 ;		rx_running = 0
@@ -226,9 +228,9 @@ rx_is_running ;3 before
 	BTFSC	rx_bitnum,3		;2 - total 11
 	GOTO	rx_stopbit		;*+1 rx_bitnum == 8 - total 12
 	;rx_bitnum < 8
-	RLF		rx_data,F		;1   rx_data <<= 1
+	RRF		rx_data,F		;1   rx_data >>= 1
 	BTFSC	d_rxd			;2
-	BSF		rx_data,0		;*   rx_data |= 1
+	BSF		rx_data,7		;*   rx_data |= 0x80
 	INCF	rx_bitnum,F		;1
 	GOTO	rx_end			;2 - total 17
 rx_stopbit ; before: 12
