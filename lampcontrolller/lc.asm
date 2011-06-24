@@ -1,9 +1,9 @@
-LIST      P=12f508
+	LIST      P=12f508
 #include <p12f508.inc>
 	__CONFIG _MCLRE_OFF & _CP_OFF & _WDT_OFF & _IntRC_OSC
 
-#define IDX 0x00
-#define BITLEN D'96'
+IDX EQU 0x00
+BITLEN EQU D'96'
 
 TEST macro reg
 	MOVF	reg,F
@@ -105,9 +105,9 @@ do_on
 	BTFSC	color,0			;2
 	BSF		GPIO,sel0		;*
 	BTFSS	color,0			;2
-	BCF		GPIO,sel1		;*
+	BCF		GPIO,sel0		;*
 	BTFSC	color,1			;2
-	BSF		GPIO,sel0		;*
+	BSF		GPIO,sel1		;*
 	BTFSS	color,1			;2
 	BCF		GPIO,sel1		;*
 	GOTO _end				;2
@@ -118,8 +118,8 @@ do_on
 do_off
 	;cycles before: 7
 	DECF	counter_off,F	;1
-	BSF		GPIO,0			;1
-	BSF		GPIO,1			;1
+	BSF		GPIO,sel0		;1
+	BSF		GPIO,sel1		;1
 	NOP
 	NOP
 	NOP
@@ -279,4 +279,4 @@ pwm_b
 ;	ORG		0x1FF ; RC cal
 ;	DATA 	0xC2A
 
-END
+	END
