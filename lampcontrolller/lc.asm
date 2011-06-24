@@ -3,7 +3,7 @@ LIST      P=12f508
 	__CONFIG _MCLRE_OFF & _CP_OFF & _WDT_OFF & _IntRC_OSC
 
 #define IDX 0x00
-#define BITLEN D'100'
+#define BITLEN D'96'
 
 TEST macro reg
 	MOVF	reg,F
@@ -195,22 +195,22 @@ main
 
 rx_start
 	BTFSC	rx_running		;2
-	GOTO	rx_is_running	;*+1 if rx_running
+	GOTO	rx_is_running	;*+1 if rx_running - total 3
 	;if !rx_running
 	BTFSC	d_rxd			;2
-	GOTO	rx_end			;*+1 if d_rx (no start bit)
+	GOTO	rx_end			;*+1 if d_rx (no start bit) - total 5
 	CLRF	TMR0			;1   TMR0 = 0
 	BSF		rx_running		;1   rx_running = 1
 	CLRF	rx_data			;1   rx_data = 0
 	CLRF	rx_bitnum		;1   rx_bitnum = 0
-	GOTO	rx_end			;2
-rx_is_running
+	GOTO	rx_end			;2 - total 10
+rx_is_running ;3 before
 	MOVLW	BITLEN			;1
 	SUBWF	TMR0,W			;1   W=TMR0-W=TMR0-BITLEN
 	;C set if a borrow did not occour
 	;borrow if BITLEN > TMR0, so !C=TMR0 < BITLEN
 	BTFSS	STATUS,C		;2
-	GOTO	rx_end			;*+1 TMR0 < BITLEN
+	GOTO	rx_end			;*+1 TMR0 < BITLEN - total 8
 ;See fig. 6-2
 ;0=SUBWF, 1=BTFSS, 2=NOP (GOTO replacement), 3=ADDLW
 ;D=O-BITLEN
@@ -221,50 +221,55 @@ rx_is_running
 ;TMR0       O+0         O+1             O+2             O+3             O+4             O+5             N+0                                             N+1
 ;S = O+1 <=> O = S-1
 ;N+1 = D+9 = O-BITLEN+9 = S-1-BITLEN+9 => N = S-1-BITLEN+9-1 = S-BITLEN+7
-	ADDWF	const7,W
-	MOVWF	TMR0
-	BTFSC	rx_bitnum,3		;2
-	GOTO	rx_stopbit		;*+1 rx_bitnum == 8
+	ADDWF	const7,W		;1
+	MOVWF	TMR0			;1
+	BTFSC	rx_bitnum,3		;2 - total 11
+	GOTO	rx_stopbit		;*+1 rx_bitnum == 8 - total 12
 	;rx_bitnum < 8
 	RLF		rx_data,F		;1   rx_data <<= 1
 	BTFSC	d_rxd			;2
 	BSF		rx_data,0		;*   rx_data |= 1
 	INCF	rx_bitnum,F		;1
-	GOTO	rx_end			;2
-rx_stopbit
+	GOTO	rx_end			;2 - total 17
+rx_stopbit ; before: 12
 	BCF		rx_running		;1   rx_running = 0
 	BTFSS	d_rxd			;2
-	GOTO	rx_end			;*+1 !d_rx - framing error
-	BTFSC	rx_invalue		;1
-	GOTO	rx_read_value	;2 if rx_invalue
+	GOTO	rx_end			;*+1 !d_rx - framing error - total 16
+	BTFSC	rx_invalue		;2
+	GOTO	rx_read_value	;*+1 if rx_invalue - total 18
 	; if !rx_invalue
 	MOVF	rx_data,W		;1
 	ANDLW	0xF0			;1   W=rx_data & 0xF0
 	XORLW	IDX << 4		;1   Z=rx_data & 0xF0 == IDX << 4
 	BTFSS	STATUS,Z		;2
-	GOTO	rx_end			;*+1 rx_data & 0xF0 != IDX << 4 - not to us
+	GOTO	rx_end			;*+1 rx_data & 0xF0 != IDX << 4 - not to us - total 23
 	MOVF	rx_data,W		;1
 	ANDLW	0x0F			;1   W=rx_data & 0x0F
 	MOVWF	rx_cmd			;1   rx_cmd=rx_data & 0x0F
 	BSF		rx_invalue		;1   rx_invalue = 1
-	GOTO	rx_end			;1
-rx_read_value
+	GOTO	rx_end			;2   total 28
+rx_read_value ; before: 18
 	BCF		rx_invalue		;1
 	MOVLW	cfg_leds		;1   W = &cfg_leds
 	ADDWF	rx_cmd,W		;1   W = &cfg_leds[rx_cmd]
 	MOVWF	FSR				;1   load &cfg_leds[rx_cmd]
 	MOVF	rx_data,W		;1   W = rx_data
 	MOVWF	INDF			;1   cfg_leds[rx_cmd] = rx_data
-
+	;total: 24
 rx_end
+;cycles:
+;min: 5
+;max: 28
+;
 
 pwm_a
 	pwm_routine counter_a_on,counter_a_off,a_color,cfg_a,sel0a_pin,sel1a_pin
 pwm_b
 	pwm_routine counter_b_on,counter_b_off,b_color,cfg_b,sel0b_pin,sel1b_pin
 ;pwm: min 30, max 38
+	GOTO main				;2
+;max cycles: 28+38+2 = 68
 
-	GOTO main
 ;	BTFSC	txd
 ;	BSF		sel0a
 ;	BTFSS	txd
