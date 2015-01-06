@@ -6,6 +6,10 @@
  * this stuff is worth it, you can buy me a beer in return.        Joerg Wunsch
  * ----------------------------------------------------------------------------
  *
+ * Modifications and improvements (custom characters) by Kasper F. Brandt
+ * <poizan@poizan.dk>. Modifications are made available under the terms of
+ * The Beer-Ware Licence as well :)
+ *
  * Stdio demo, upper layer of LCD driver.
  *
  * $Id: lcd.c 1008 2005-12-28 21:38:59Z joerg_wunsch $
